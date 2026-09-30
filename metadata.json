@@ -1,0 +1,6 @@
+{
+  "name": "DRIVE — Research. Challenge. Verify.",
+  "description": "Research. Challenge. Verify. Autonomous research platform where three agents plan, run and write — and nothing ships unless every number is verified.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
