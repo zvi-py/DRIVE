@@ -5,11 +5,12 @@ import { RedTeamWorkflowModal } from './components/RedTeamWorkflowModal.tsx';
 import { DocsModal } from './components/DocsModal.tsx';
 import { AgentDetailModal, AgentType } from './components/AgentDetailModal.tsx';
 import { DriveBrowserWorkspace } from './components/DriveBrowserWorkspace.tsx';
-import { CheckCircle2, ShieldAlert, Sparkles, Terminal, ArrowRight, ArrowDown } from 'lucide-react';
+import { ResearchPaperModal } from './components/ResearchPaperModal.tsx';
+import { CheckCircle2, ShieldAlert, Sparkles, Terminal, ArrowRight, ArrowDown, FileText, ExternalLink } from 'lucide-react';
 
 export default function App() {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [enteredResearchArea, setEnteredResearchArea] = useState(false);
+  const [paperModalOpen, setPaperModalOpen] = useState(false);
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [redTeamModalOpen, setRedTeamModalOpen] = useState(false);
   const [docsModalOpen, setDocsModalOpen] = useState(false);
@@ -55,8 +56,8 @@ export default function App() {
     scr();
 
     const onPointerMove = (e: MouseEvent) => {
-      mx = e.clientX / window.innerWidth - 0.5;
-      my = e.clientY / window.innerHeight - 0.5;
+      mx = e.clientX / Math.max(1, window.innerWidth) - 0.5;
+      my = e.clientY / Math.max(1, window.innerHeight) - 0.5;
     };
     window.addEventListener('pointermove', onPointerMove, { passive: true });
 
@@ -71,7 +72,7 @@ export default function App() {
       [$('#ag0'), 0.80, 0.85, 2.0, 3.0],
       [$('#ag1'), 0.81, 0.86, 2.0, 3.0],
       [$('#ag2'), 0.82, 0.87, 2.0, 3.0],
-      [$('#hub'), 0.83, 0.88, 2.0, 3.0],
+      [$('#paper-cta'), 0.83, 0.89, 2.0, 3.0],
     ];
 
     const gl = glowRef.current;
@@ -79,6 +80,7 @@ export default function App() {
     // Text Scrambler identical to reference engine
     const SC = 'abcdefghijklmnopqrstuvwxyz#/<>_';
     function scm(el: HTMLElement) {
+      if (!el) return;
       const ws: [Text, string][] = [];
       const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       let n: Text | null;
@@ -89,9 +91,11 @@ export default function App() {
       function f() {
         const k = Math.min(1, (performance.now() - t0) / 900);
         ws.forEach(([node, orig]) => {
-          node.data = orig.replace(/\S/g, (c, i) =>
-            i / orig.length < k ? c : SC[(Math.random() * SC.length) | 0]
-          );
+          if (node.isConnected) {
+            node.data = orig.replace(/\S/g, (c, i) =>
+              i / orig.length < k ? c : SC[(Math.random() * SC.length) | 0]
+            );
+          }
         });
         if (k < 1) requestAnimationFrame(f);
       }
@@ -112,6 +116,12 @@ export default function App() {
           }
           if (o < 0.02) elAny._s = 0;
         }
+        if (e.id === 'paper-cta') {
+          e.style.opacity = `${o}`;
+          e.style.transform = `translateX(-50%) translateY(${(1 - o) * 20}px)`;
+          e.style.pointerEvents = o > 0.6 ? 'auto' : 'none';
+          return;
+        }
         e.style.filter = `blur(${(1 - o) * 8}px)`;
         const t = e.id === 'b4' ? 'translateX(-50%) ' : '';
         e.style.transform = `${t}translateY(${(1 - o) * 24}px)`;
@@ -121,14 +131,13 @@ export default function App() {
       if (gl) {
         gl.style.opacity = `${sm(0.78, 0.88, P) * 0.7}`;
       }
-      setScrollProgress(P);
     }
 
     let R: THREE.WebGLRenderer | null = null;
     const canvas = canvasRef.current;
     if (canvas) {
       try {
-        R = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        R = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
         if (!R.getContext()) throw 0;
       } catch {
         document.body.classList.add('nogl');
@@ -339,14 +348,16 @@ export default function App() {
 
       function rs() {
         if (!R || !bc) return;
-        U.uAsp.value = window.innerWidth / window.innerHeight;
-        R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        R.setSize(window.innerWidth, window.innerHeight);
-        cam.aspect = window.innerWidth / window.innerHeight;
+        const w = Math.max(1, window.innerWidth);
+        const h = Math.max(1, window.innerHeight);
+        U.uAsp.value = w / h;
+        R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        R.setSize(w, h);
+        cam.aspect = w / h;
         cam.position.z = 12 * Math.max(1, 1.25 / cam.aspect);
         cam.updateProjectionMatrix();
-        bw = bc.width = Math.ceil(window.innerWidth / 4);
-        bh = bc.height = Math.ceil(window.innerHeight / 4);
+        bw = bc.width = Math.max(1, Math.ceil(w / 4));
+        bh = bc.height = Math.max(1, Math.ceil(h / 4));
       }
       window.addEventListener('resize', rs);
       rs();
@@ -361,9 +372,13 @@ export default function App() {
         grp.rotation.x += (my * 0.12 - grp.rotation.x) * 0.05;
 
         R.render(sc, cam);
-        if (bx && bc && canvas) {
-          bx.clearRect(0, 0, bw, bh);
-          bx.drawImage(canvas, 0, 0, bw, bh);
+        if (bx && bc && canvas && bw > 0 && bh > 0 && canvas.width > 0 && canvas.height > 0) {
+          try {
+            bx.clearRect(0, 0, bw, bh);
+            bx.drawImage(canvas, 0, 0, bw, bh);
+          } catch {
+            // handle zero dimension canvas drawImage gracefully
+          }
         }
         ui();
       };
@@ -435,18 +450,16 @@ export default function App() {
         </div>
 
         <ul>
-          <li onClick={() => jumpToProgress(0.0)}>Platform</li>
-          <li onClick={() => jumpToProgress(1.0)}>Agents ▾</li>
-          <li onClick={() => setRedTeamModalOpen(true)}>Verification</li>
-          <li onClick={() => setDocsModalOpen(true)}>Docs</li>
           <li>
-            <button
-              className="text-xs font-mono tracking-wider px-3.5 py-1.5 rounded-full backdrop-blur-md bg-white/[0.05] hover:bg-white/[0.1] text-white/90 border border-white/15 hover:border-white/30 flex items-center gap-2 transition-all cursor-pointer shadow-sm"
-              onClick={() => setEnteredResearchArea(true)}
+            <a
+              href="/assets/aistudio/DRIVE_Research_Paper_Final_310ecd38.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              title="Open DRIVE Documentation (14-Page Technical Paper)"
             >
-              <span>Research Area</span>
-              <ArrowRight size={11} className="text-white/50" />
-            </button>
+              Documentation
+            </a>
           </li>
         </ul>
       </nav>
@@ -466,19 +479,15 @@ export default function App() {
         >
           Explore Agents <i></i>
         </button>
-        <button
+        <a
+          href="/assets/aistudio/DRIVE_Research_Paper_Final_310ecd38.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
           className="btn g"
-          onClick={() => setDocsModalOpen(true)}
+          style={{ textDecoration: 'none' }}
         >
           Documentation
-        </button>
-        <button
-          className="btn o backdrop-blur-md"
-          style={{ background: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.2)' }}
-          onClick={() => setEnteredResearchArea(true)}
-        >
-          Enter Research Area →
-        </button>
+        </a>
       </section>
 
       {/* Beat 1: About the Platform (0:04 - 0:07) */}
@@ -557,39 +566,38 @@ export default function App() {
         <p>Turns the verified research into a structured final report, connects claims to evidence, and maintains the research/decision record.</p>
       </div>
 
+      {/* FINAL STAGE: DOCUMENTATION ACCESS (PERFECTLY CENTERED, EXACT SAME FONT AND STYLE, NO ICONS/EMOJIS) */}
       <div
-        className="ag cursor-pointer"
-        id="hub"
-        onClick={() => setSelectedAgent('hub')}
-        title="Click to inspect Shared File State Hub"
-      >
-        <i>SHARED FILE CONTRACT</i>
-        <p>
-          STATUS.md · DECISIONS.md · results/*.json · ✕ Zero agent chat — every handoff is an immutable file
-        </p>
-      </div>
-
-      {/* FINAL TRANSITION: LUXURY GLASS BUTTON AT THE VERY END OF MAIN PAGE AT CENTER */}
-      <div
-        className="fixed z-30 left-1/2 -translate-x-1/2 transition-all duration-700 flex flex-col items-center pointer-events-auto"
+        className="fixed z-35 flex flex-col items-center pointer-events-auto"
+        id="paper-cta"
         style={{
-          bottom: '7vh',
-          opacity: scrollProgress > 0.80 ? 1 : 0,
-          pointerEvents: scrollProgress > 0.80 ? 'auto' : 'none',
-          transform: `translate(-50%, ${scrollProgress > 0.80 ? 0 : 25}px)`,
+          left: '50%',
+          bottom: '7.5vh',
+          transform: 'translateX(-50%)',
+          opacity: 0,
+          pointerEvents: 'none',
         }}
       >
-        <button
-          onClick={() => setEnteredResearchArea(true)}
-          className="group relative px-9 py-4 rounded-full backdrop-blur-2xl bg-white/[0.04] hover:bg-white/[0.09] active:bg-white/[0.14] text-white font-heading font-medium text-xs sm:text-sm tracking-[0.22em] uppercase border border-white/20 hover:border-white/40 transition-all duration-300 flex items-center gap-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] hover:shadow-[0_16px_50px_rgba(255,255,255,0.1),inset_0_1px_2px_rgba(255,255,255,0.4)] cursor-pointer"
+        <a
+          href="/assets/aistudio/DRIVE_Research_Paper_Final_310ecd38.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn g"
+          style={{
+            marginRight: 0,
+            textDecoration: 'none',
+            fontSize: '9.5px',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            padding: '12px 28px',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-white/70 group-hover:bg-white transition-colors animate-pulse" />
-          <span>Enter Research Area</span>
-          <span className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all">→</span>
-        </button>
-        <div className="mt-2.5 text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase">
-          Autonomous depth-ar Workspace
-        </div>
+          Documentation
+        </a>
       </div>
 
       {/* ENTERED RESEARCH AREA DASHBOARD (BLACK DOTTED THEME MATCHING REFERENCE IMAGE) */}
@@ -619,6 +627,12 @@ export default function App() {
       <DocsModal
         isOpen={docsModalOpen}
         onClose={() => setDocsModalOpen(false)}
+      />
+
+      {/* Drive-AR Research Paper Viewer Modal */}
+      <ResearchPaperModal
+        isOpen={paperModalOpen}
+        onClose={() => setPaperModalOpen(false)}
       />
 
       {/* Source Code Modal */}

@@ -624,13 +624,11 @@ aside a:hover:not(.on) {
   #ag0 { top: 13vh !important; }
   #ag1 { top: 31vh !important; }
   #ag2 { top: 49vh !important; }
-  #hub { top: 68vh !important; width: auto !important; }
   .ag p { display: none; }
-  #hub p { display: block; }
 }
 
 /* Multi-Agent Constellation Cards (DRIVE Architecture - Final Stage) */
-#ag0, #ag1, #ag2, #hub {
+#ag0, #ag1, #ag2 {
   position: fixed;
   z-index: 10;
   padding: 16px 22px;
@@ -669,14 +667,15 @@ aside a:hover:not(.on) {
   top: 11vh;
   transform: translateX(-50%);
   width: min(440px, 88vw);
-  border-color: rgba(183, 156, 255, 0.35);
+  border-color: rgba(243, 210, 148, 0.4);
+  background: rgba(18, 15, 24, 0.94);
 }
 #ag0 i {
-  color: #b79cff;
+  color: #f3d294;
 }
 #ag0:hover {
-  border-color: #b79cff;
-  box-shadow: 0 0 35px rgba(183, 156, 255, 0.3);
+  border-color: #f3d294;
+  box-shadow: 0 0 35px rgba(243, 210, 148, 0.35);
   transform: translateX(-50%) translateY(-3px);
 }
 
@@ -684,14 +683,15 @@ aside a:hover:not(.on) {
   left: 4vw;
   bottom: 8vh;
   width: min(420px, 44vw);
-  border-color: rgba(47, 107, 255, 0.35);
+  border-color: rgba(147, 197, 253, 0.4);
+  background: rgba(12, 17, 28, 0.94);
 }
 #ag1 i {
-  color: #5c92ff;
+  color: #93c5fd;
 }
 #ag1:hover {
-  border-color: #5c92ff;
-  box-shadow: 0 0 35px rgba(92, 146, 255, 0.3);
+  border-color: #93c5fd;
+  box-shadow: 0 0 35px rgba(147, 197, 253, 0.35);
   transform: translateY(-3px);
 }
 
@@ -699,45 +699,16 @@ aside a:hover:not(.on) {
   right: 4vw;
   bottom: 8vh;
   width: min(420px, 44vw);
-  border-color: rgba(53, 208, 200, 0.35);
+  border-color: rgba(94, 234, 212, 0.4);
+  background: rgba(10, 22, 22, 0.94);
 }
 #ag2 i {
-  color: #35d0c8;
+  color: #5eead4;
 }
 #ag2:hover {
-  border-color: #35d0c8;
-  box-shadow: 0 0 35px rgba(53, 208, 200, 0.3);
+  border-color: #5eead4;
+  box-shadow: 0 0 35px rgba(94, 234, 212, 0.35);
   transform: translateY(-3px);
-}
-
-#hub {
-  left: 50%;
-  bottom: 2vh;
-  transform: translateX(-50%);
-  width: auto;
-  max-width: min(520px, 90vw);
-  padding: 8px 16px;
-  border-radius: 9999px;
-  text-align: center;
-  border-color: rgba(226, 217, 255, 0.2);
-  background: rgba(10, 8, 18, 0.85);
-}
-#hub i {
-  display: inline;
-  color: #e2d9ff;
-  font-size: 9px;
-  margin-right: 8px;
-}
-#hub p {
-  display: inline;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #8c8aa0;
-}
-#hub:hover {
-  border-color: #e2d9ff;
-  box-shadow: 0 0 25px rgba(226, 217, 255, 0.2);
-  transform: translateX(-50%) translateY(-2px);
 }
 
 @media (max-width: 760px) {
@@ -783,4 +754,21 @@ aside a:hover:not(.on) {
 #b4 span {
   font: 500 clamp(15px, 2vw, 22px) "Inter Tight", system-ui, sans-serif;
   letter-spacing: 0.02em;
+}
+
+#paper-cta {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 7.5vh !important;
+  transform: translateX(-50%) !important;
+  z-index: 35 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  margin: 0 !important;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
 }
