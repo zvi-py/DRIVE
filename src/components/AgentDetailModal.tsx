@@ -7,12 +7,14 @@ interface AgentDetailModalProps {
   agentType: AgentType;
   onClose: () => void;
   onOpenPipeline?: () => void;
+  onSelectAgent?: (type: AgentType) => void;
 }
 
 export const AgentDetailModal: React.FC<AgentDetailModalProps> = ({
   agentType,
   onClose,
   onOpenPipeline,
+  onSelectAgent,
 }) => {
   if (!agentType) return null;
 
@@ -125,6 +127,56 @@ export const AgentDetailModal: React.FC<AgentDetailModalProps> = ({
             <X size={18} />
           </button>
         </div>
+
+        {/* Agent Switcher Tabs */}
+        {onSelectAgent && (
+          <div className="px-5 py-2.5 bg-black/60 border-b border-white/[0.06] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => onSelectAgent('research')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all flex items-center gap-1.5 shrink-0 ${
+                agentType === 'research'
+                  ? 'bg-purple-950/80 text-purple-200 border border-purple-500/50 shadow-[0_0_12px_rgba(192,132,252,0.25)]'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              Research
+            </button>
+            <button
+              onClick={() => onSelectAgent('experiment')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all flex items-center gap-1.5 shrink-0 ${
+                agentType === 'experiment'
+                  ? 'bg-blue-950/80 text-blue-200 border border-blue-500/50 shadow-[0_0_12px_rgba(96,165,250,0.25)]'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              Experiment
+            </button>
+            <button
+              onClick={() => onSelectAgent('writing')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all flex items-center gap-1.5 shrink-0 ${
+                agentType === 'writing'
+                  ? 'bg-emerald-950/80 text-emerald-200 border border-emerald-500/50 shadow-[0_0_12px_rgba(52,211,153,0.25)]'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Writing
+            </button>
+            <button
+              onClick={() => onSelectAgent('hub')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all flex items-center gap-1.5 shrink-0 ${
+                agentType === 'hub'
+                  ? 'bg-indigo-950/80 text-indigo-200 border border-indigo-500/50 shadow-[0_0_12px_rgba(165,180,252,0.25)]'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+              File Hub
+            </button>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs font-sans">

@@ -67,7 +67,7 @@ export default function App() {
       [$('#b1'), 0.22, 0.28, 0.38, 0.44],
       [$('#b2'), 0.44, 0.50, 0.58, 0.64],
       [$('#bs'), 0.52, 0.56, 0.60, 0.64],
-      [$('#b3'), 0.64, 0.70, 0.76, 0.82],
+      [$('#b3'), 0.64, 0.70, 0.74, 0.78],
       // Final Stage: Multi-Agent Constellation cards stay visible permanently once reached
       [$('#ag0'), 0.80, 0.85, 2.0, 3.0],
       [$('#ag1'), 0.81, 0.86, 2.0, 3.0],
@@ -118,13 +118,13 @@ export default function App() {
         }
         if (e.id === 'paper-cta') {
           e.style.opacity = `${o}`;
-          e.style.transform = `translateX(-50%) translateY(${(1 - o) * 20}px)`;
+          e.style.transform = `translateX(-50%) translateY(${(1 - o) * 16}px)`;
           e.style.pointerEvents = o > 0.6 ? 'auto' : 'none';
           return;
         }
-        e.style.filter = `blur(${(1 - o) * 8}px)`;
-        const t = e.id === 'b4' ? 'translateX(-50%) ' : '';
-        e.style.transform = `${t}translateY(${(1 - o) * 24}px)`;
+        e.style.filter = o > 0.96 ? 'none' : `blur(${(1 - o) * 6}px)`;
+        const t = (e.id === 'b4' || e.id === 'ag0') ? 'translateX(-50%) ' : '';
+        e.style.transform = `${t}translateY(${(1 - o) * 16}px)`;
         e.style.pointerEvents = o > 0.6 ? 'auto' : 'none';
       });
 
@@ -230,11 +230,18 @@ export default function App() {
             float an = s.x * 6.2832 + (t - 0.5) * (s.z > 0.5 ? 4.0 : -4.0);
             vec3 E = vec3(mix(-10.0, 10.0, t), rd * sin(an) * 0.8, rd * cos(an));
 
-            // THE FINAL STAGE: Tri-Agent Constellation Cluster (Master, Experiment, Writing Agents & Hub)
+            // THE FINAL STAGE: Tri-Agent Constellation Cluster (Research, Experiment, Writing Agents)
             int g = int(floor(s.z * 2.999));
-            vec2 ag = g == 0 ? vec2(0.0, 3.4) : (g == 1 ? vec2(-6.6, -2.6) : vec2(6.6, -2.6));
+            // Desktop constellation coordinates (triangular layout)
+            vec2 agDesktop = g == 0 ? vec2(0.0, 3.2) : (g == 1 ? vec2(-6.4, -2.5) : vec2(6.4, -2.5));
+            // Mobile constellation coordinates (proportional triangular layout matching mobile cards)
+            vec2 agMobile = g == 0 ? vec2(0.0, 3.65) : (g == 1 ? vec2(-1.15, -3.40) : vec2(1.15, -3.40));
+            float isMob = uAsp < 0.85 ? 1.0 : 0.0;
+            vec2 ag = mix(agDesktop, agMobile, isMob);
+
             float an2 = s.x * 6.2832;
-            vec3 T = vec3(mix(ag, vec2(0.0, -0.4), pow(t, 0.9)) + vec2(cos(an2), sin(an2)) * (0.15 + s.y) * pow(1.0 - t, 0.7), (s.y - 0.5) * 0.5);
+            vec2 centerHub = mix(vec2(0.0, -0.4), vec2(0.0, -1.05), isMob);
+            vec3 T = vec3(mix(ag, centerHub, pow(t, 0.9)) + vec2(cos(an2), sin(an2)) * (0.15 + s.y) * pow(1.0 - t, 0.7), (s.y - 0.5) * 0.5);
 
             vec3 p = A;
             p = mix(p, B, smoothstep(0.18, 0.30, uP));
@@ -269,10 +276,13 @@ export default function App() {
             vec3 col = mix(vec3(0.23, 0.12, 0.66), vec3(0.72, 0.61, 1.0), clamp(hot * 1.4 + s.x * 0.25, 0.0, 1.0));
             col = mix(col, vec3(0.85, 0.78, 1.0), hot * hot * 0.3);
 
-            // In the Final Stage (Multi-Agent Constellation), illuminate strands with dedicated agent colors
+            // In the Final Stage (Multi-Agent Constellation), illuminate strands with dedicated agent colors:
+            // g == 0: Research Agent -> Violet / Purple (#c084fc)
+            // g == 1: Experiment Agent -> Electric Blue (#60a5fa)
+            // g == 2: Writing Agent -> Emerald / Mint Teal (#34d399)
             float ta = smoothstep(0.78, 0.88, uP);
-            vec3 gc = g == 0 ? vec3(0.75, 0.62, 1.0) : (g == 1 ? vec3(0.3, 0.55, 1.0) : vec3(0.2, 0.88, 0.82));
-            col = mix(col, gc * (0.7 + hot * 0.7), ta * 0.9);
+            vec3 gc = g == 0 ? vec3(0.78, 0.52, 1.0) : (g == 1 ? vec3(0.35, 0.65, 1.0) : vec3(0.2, 0.88, 0.62));
+            col = mix(col, gc * (0.8 + hot * 0.6), ta * 0.94);
 
             float pu = smoothstep(0.96, 1.0, sin(t * 9.0 - uTm * 0.9 + s.y * 60.0) * 0.5 + 0.5);
             vA = (0.075 + 0.3 * hot) * smoothstep(0.0, 0.05, t) * smoothstep(1.0, 0.88, t) + pu * 0.35 * smoothstep(0.0, 0.1, t);
@@ -354,7 +364,8 @@ export default function App() {
         R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         R.setSize(w, h);
         cam.aspect = w / h;
-        cam.position.z = 12 * Math.max(1, 1.25 / cam.aspect);
+        const isMob = w <= 768;
+        cam.position.z = isMob ? 11.5 : 12 * Math.max(1, 1.25 / cam.aspect);
         cam.updateProjectionMatrix();
         bw = bc.width = Math.max(1, Math.ceil(w / 4));
         bh = bc.height = Math.max(1, Math.ceil(h / 4));
@@ -438,15 +449,20 @@ export default function App() {
       {/* Radiant Iris glow */}
       <div id="gl" ref={glowRef} />
 
-      {/* Navigation bar — Clean Typography: Just 'DRIVE' (no logo icon) as requested */}
+      {/* Navigation bar with brand logo icon */}
       <nav id="nv" ref={navRef}>
         <div
-          className="text-xl font-bold tracking-wider font-heading text-white select-none cursor-pointer hover:text-violet-300 transition-colors"
+          className="flex items-center gap-2.5 text-xl font-bold tracking-wider font-heading text-white select-none cursor-pointer hover:text-violet-300 transition-colors group"
           onClick={() => jumpToProgress(0)}
           onDoubleClick={() => setCopyModalOpen(true)}
           title="DRIVE — Deep Research Intelligence & Verification Engine (Double click to view source code)"
         >
-          DRIVE
+          <img
+            src="/assets/aistudio/image_aee5510e.png"
+            alt="DRIVE Logo"
+            className="w-7 h-7 rounded-md object-cover border border-white/20 shadow-sm transition-transform duration-300 group-hover:scale-105"
+          />
+          <span>DRIVE</span>
         </div>
 
         <ul>
@@ -539,9 +555,17 @@ export default function App() {
         onClick={() => setSelectedAgent('research')}
         title="Click to inspect Research Agent"
       >
-        <i>DISCOVERS & INVESTIGATES</i>
-        <b>Research Agent</b>
-        <p>Breaks the question into research tasks, runs experiments/searches, gathers evidence, and investigates the problem.</p>
+        <div className="ag-inner w-full h-full">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <i className="flex items-center gap-1.5 m-0 truncate">
+              <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc] shrink-0" />
+              <span className="truncate">DISCOVERS &amp; INVESTIGATES</span>
+            </i>
+            <span className="text-[9px] font-mono text-purple-300 border border-purple-500/40 bg-purple-950/50 px-2 py-0.5 rounded-full shrink-0">Tap to inspect</span>
+          </div>
+          <b>Research Agent</b>
+          <p>Breaks the question into research tasks, runs searches, gathers evidence, and investigates empirical sources.</p>
+        </div>
       </div>
 
       <div
@@ -550,9 +574,17 @@ export default function App() {
         onClick={() => setSelectedAgent('experiment')}
         title="Click to inspect Experiment Agent"
       >
-        <i>CHALLENGES & VALIDATES</i>
-        <b>Experiment Agent</b>
-        <p>Tests the initial findings, searches for counter-evidence, detects failures/contradictions, and decides what needs further investigation.</p>
+        <div className="ag-inner w-full h-full">
+          <div className="flex items-center justify-between gap-1 mb-1.5">
+            <i className="flex items-center gap-1.5 m-0 truncate">
+              <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
+              <span className="truncate">VALIDATES<span className="hidden sm:inline"> &amp; CHALLENGES</span></span>
+            </i>
+            <span className="text-[8.5px] font-mono text-blue-300 border border-blue-500/40 bg-blue-950/50 px-1.5 py-0.5 rounded-full shrink-0">Inspect</span>
+          </div>
+          <b>Experiment Agent</b>
+          <p>Stress-tests findings, searches counter-evidence, and detects failures.</p>
+        </div>
       </div>
 
       <div
@@ -561,9 +593,17 @@ export default function App() {
         onClick={() => setSelectedAgent('writing')}
         title="Click to inspect Writing Agent"
       >
-        <i>SYNTHESIZES & REPORTS</i>
-        <b>Writing Agent</b>
-        <p>Turns the verified research into a structured final report, connects claims to evidence, and maintains the research/decision record.</p>
+        <div className="ag-inner w-full h-full">
+          <div className="flex items-center justify-between gap-1 mb-1.5">
+            <i className="flex items-center gap-1.5 m-0 truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] shrink-0" />
+              <span className="truncate">SYNTHESIZES<span className="hidden sm:inline"> &amp; REPORTS</span></span>
+            </i>
+            <span className="text-[8.5px] font-mono text-emerald-300 border border-emerald-500/40 bg-emerald-950/50 px-1.5 py-0.5 rounded-full shrink-0">Inspect</span>
+          </div>
+          <b>Writing Agent</b>
+          <p>Turns verified research into reports with full citation trails.</p>
+        </div>
       </div>
 
       {/* FINAL STAGE: DOCUMENTATION ACCESS (PERFECTLY CENTERED, EXACT SAME FONT AND STYLE, NO ICONS/EMOJIS) */}
@@ -611,6 +651,7 @@ export default function App() {
       <AgentDetailModal
         agentType={selectedAgent}
         onClose={() => setSelectedAgent(null)}
+        onSelectAgent={setSelectedAgent}
         onOpenPipeline={() => {
           setSelectedAgent(null);
           setRedTeamModalOpen(true);

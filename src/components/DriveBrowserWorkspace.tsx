@@ -105,6 +105,11 @@ export const DriveBrowserWorkspace: React.FC<DriveBrowserWorkspaceProps> = ({ on
           </button>
 
           <div className="flex items-center gap-2.5">
+            <img
+              src="/assets/aistudio/image_aee5510e.png"
+              alt="DRIVE Logo"
+              className="w-5 h-5 rounded object-cover border border-white/20 shadow-sm"
+            />
             <span className="font-heading font-semibold text-sm tracking-[0.28em] text-white uppercase">
               DRIVE
             </span>
